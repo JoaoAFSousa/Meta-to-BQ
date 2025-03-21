@@ -1,0 +1,24 @@
+# Ignore virtual environment directory
+venv/
+
+# Ignore .env file (for credentials, API keys, etc.)
+.env
+
+# Ignore Python bytecode files
+__pycache__/
+*.pyc
+
+# Ignore Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# Ignore editor-specific files (VS Code, PyCharm, etc.)
+.vscode/
+.idea/
+
+# Ignore local configuration files
+*.local
+
+test.py
+templates/
+ongoing/
+creds.json
