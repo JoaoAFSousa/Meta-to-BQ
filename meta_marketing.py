@@ -1,6 +1,7 @@
 # Importing libraries
 import requests
 import pandas as pd
+from table_schemas import *
 
 class MetaClient:
     def __init__(self, token: str = None):
@@ -62,7 +63,12 @@ class MetaClient:
             'impressions',
             'reach',
             'actions',
-            'spend'
+            'spend',
+            'video_p25_watched_actions',
+            'video_p50_watched_actions',
+            'video_p75_watched_actions',
+            'video_p95_watched_actions',
+            'video_p100_watched_actions'
         ]
         params = {
             'level': level,
@@ -108,6 +114,11 @@ class MetaClient:
                     'optimization_goal': item['optimization_goal'],
                     'impressions': item['impressions'],
                     'reach': item['reach'],
+                    'video_p25_watched_actions': item.get('video_p25_watched_actions', [{}])[0].get('value', None),
+                    'video_p50_watched_actions': item.get('video_p50_watched_actions', [{}])[0].get('value', None),
+                    'video_p75_watched_actions': item.get('video_p75_watched_actions', [{}])[0].get('value', None),
+                    'video_p95_watched_actions': item.get('video_p95_watched_actions', [{}])[0].get('value', None),
+                    'video_p100_watched_actions': item.get('video_p100_watched_actions', [{}])[0].get('value', None),
                     'spend': item['spend']
                 }
                 normal_item.update(action_fields)
@@ -115,6 +126,7 @@ class MetaClient:
             df = pd.json_normalize(normal_data)
             df.columns = [col_name.replace('.', '_') for col_name in df.columns]
             df['date'] = pd.to_datetime(df['date'])
+            df = insights_ads_schema.validate(df)
             return df
         else:
             return pd.DataFrame()
@@ -155,6 +167,7 @@ class MetaClient:
 
         df = pd.json_normalize(ads_data)
         df.columns = [col_name.replace('.', '_') for col_name in df.columns]
+        df = ads_schema.validate(df) if df.shape != (0, 0) else pd.DataFrame()
         return df
 
     def df_from_adsets(self, ad_account_id: str):
@@ -195,6 +208,7 @@ class MetaClient:
 
         df = pd.json_normalize(adsets)
         df.columns = [col_name.replace('.', '_') for col_name in df.columns]
+        df = adsets_schema.validate(df) if df.shape != (0, 0) else pd.DataFrame()
         return df
 
     def df_from_campaigns(self, ad_account_id: str):
@@ -233,4 +247,5 @@ class MetaClient:
 
         df = pd.json_normalize(campaigns)
         df.columns = [col_name.replace('.', '_') for col_name in df.columns]
+        df = campaigns_schema.validate(df) if df.shape != (0, 0) else pd.DataFrame()
         return df
