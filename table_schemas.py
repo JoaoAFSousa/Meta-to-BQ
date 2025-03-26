@@ -67,6 +67,8 @@ insights_ads_schema = pa.DataFrameSchema({
     "action_landing_page_view": pa.Column(pa.Int, nullable=False, default=0),
     "action_lead": pa.Column(pa.Int, nullable=False, default=0),
     "action_onsite_conversion_messaging_conversation_started_7d": pa.Column(pa.Int, nullable=False, default=0),
+    "action_offsite_conversion_fb_pixel_initiate_checkout": pa.Column(pa.Int, nullable=False, default=0),
+    "action_offsite_conversion_fb_pixel_purchase": pa.Column(pa.Int, nullable=False, default=0),
     "video_p25_watched_actions": pa.Column(pa.Int, nullable=False, default=0),
     "video_p50_watched_actions": pa.Column(pa.Int, nullable=False, default=0),
     "video_p75_watched_actions": pa.Column(pa.Int, nullable=False, default=0),

@@ -155,20 +155,23 @@ class MetaClient:
             'access_token': self.token
         }
         response = requests.get(url, params=params)
-        response_json = response.json()
-        ads_data = response_json['data']
-        while True:
-            try:
-                response = requests.get(response_json['paging']['next'])
-                response_json = response.json()
-                ads_data.extend(response_json['data'])
-            except KeyError:
-                break
+        if response.status_code == 200:
+            response_json = response.json()
+            ads_data = response_json['data']
+            while True:
+                try:
+                    response = requests.get(response_json['paging']['next'])
+                    response_json = response.json()
+                    ads_data.extend(response_json['data'])
+                except KeyError:
+                    break
 
-        df = pd.json_normalize(ads_data)
-        df.columns = [col_name.replace('.', '_') for col_name in df.columns]
-        df = ads_schema.validate(df) if df.shape != (0, 0) else pd.DataFrame()
-        return df
+            df = pd.json_normalize(ads_data)
+            df.columns = [col_name.replace('.', '_') for col_name in df.columns]
+            df = ads_schema.validate(df) if df.shape != (0, 0) else pd.DataFrame()
+            return df
+        else:
+            raise KeyError(response.text)
 
     def df_from_adsets(self, ad_account_id: str):
         '''Calls data from adsets and returns it in a dataframe'''
@@ -196,20 +199,23 @@ class MetaClient:
             'access_token': self.token
         }
         response = requests.get(url, params=params)
-        response_json = response.json()
-        adsets = response_json['data']
-        while True:
-            try:
-                response = requests.get(response_json['paging']['next'])
-                response_json = response.json()
-                adsets.extend(response_json['data'])
-            except KeyError:
-                break
+        if response.status_code == 200:
+            response_json = response.json()
+            adsets = response_json['data']
+            while True:
+                try:
+                    response = requests.get(response_json['paging']['next'])
+                    response_json = response.json()
+                    adsets.extend(response_json['data'])
+                except KeyError:
+                    break
 
-        df = pd.json_normalize(adsets)
-        df.columns = [col_name.replace('.', '_') for col_name in df.columns]
-        df = adsets_schema.validate(df) if df.shape != (0, 0) else pd.DataFrame()
-        return df
+            df = pd.json_normalize(adsets)
+            df.columns = [col_name.replace('.', '_') for col_name in df.columns]
+            df = adsets_schema.validate(df) if df.shape != (0, 0) else pd.DataFrame()
+            return df
+        else:
+            raise KeyError(response.text)
 
     def df_from_campaigns(self, ad_account_id: str):
         '''Calls data from campaigns and returns it in a dataframe'''
@@ -235,17 +241,20 @@ class MetaClient:
             'access_token': self.token
         }
         response = requests.get(url, params=params)
-        response_json = response.json()
-        campaigns = response_json['data']
-        while True:
-            try:
-                response = requests.get(response_json['paging']['next'])
-                response_json = response.json()
-                campaigns.extend(response_json['data'])
-            except KeyError:
-                break
+        if response.status_code == 200:
+            response_json = response.json()
+            campaigns = response_json['data']
+            while True:
+                try:
+                    response = requests.get(response_json['paging']['next'])
+                    response_json = response.json()
+                    campaigns.extend(response_json['data'])
+                except KeyError:
+                    break
 
-        df = pd.json_normalize(campaigns)
-        df.columns = [col_name.replace('.', '_') for col_name in df.columns]
-        df = campaigns_schema.validate(df) if df.shape != (0, 0) else pd.DataFrame()
-        return df
+            df = pd.json_normalize(campaigns)
+            df.columns = [col_name.replace('.', '_') for col_name in df.columns]
+            df = campaigns_schema.validate(df) if df.shape != (0, 0) else pd.DataFrame()
+            return df
+        else:
+            raise KeyError(response.text)
