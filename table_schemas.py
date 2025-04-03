@@ -73,5 +73,8 @@ insights_ads_schema = pa.DataFrameSchema({
     "video_p50_watched_actions": pa.Column(pa.Int, nullable=False, default=0),
     "video_p75_watched_actions": pa.Column(pa.Int, nullable=False, default=0),
     "video_p95_watched_actions": pa.Column(pa.Int, nullable=False, default=0),
-    "video_p100_watched_actions": pa.Column(pa.Int, nullable=False, default=0)
+    "video_p100_watched_actions": pa.Column(pa.Int, nullable=False, default=0),
+    "action_post": pa.Column(pa.Int, nullable=False, default=0),
+    "action_onsite_conversion_post_save": pa.Column(pa.Int, nullable=False, default=0),
+    "action_comment": pa.Column(pa.Int, nullable=False, default=0)
 }, strict='filter', coerce=True, add_missing_columns=True)
