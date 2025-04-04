@@ -90,10 +90,14 @@ def load(
     bq_project_id: str,
     bq_dataset: str,
     start: str,
-    end: str = (datetime.today() - timedelta(1)).strftime('%Y-%m-%d')
+    end: str = (datetime.today() - timedelta(1)).strftime('%Y-%m-%d'),
+    write_mode: str = 'truncate'
 ):
     'Loads data from a list of ad account into a BQ dataset.'
     # Creating dataset if it doesn't exist yet (it will be overwritten if exists)
+    if write_mode not in ['append', 'truncate']:
+        raise ValueError("Insert a valid write mode, 'append' or 'truncate'.")
+    
     dataset_query = f'''CREATE SCHEMA IF NOT EXISTS `{bq_project_id}.{bq_dataset}`'''
     bq_client.query(dataset_query)
     # Extracting data to dataframes
@@ -116,7 +120,7 @@ def load(
         df_to_bq(
             table_id=f'{bq_project_id}.{bq_dataset}.{table}', 
             df=df, 
-            write_mode='truncate',
+            write_mode=write_mode,
             client=bq_client
         )
 

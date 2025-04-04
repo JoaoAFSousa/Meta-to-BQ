@@ -63,6 +63,7 @@ def local_load():
     bq_dataset = data.get('bq_dataset')
     start = data.get('start')
     credentials = data.get('credentials')
+    write_mode = data.get('write_mode', None)
     # Credentials
     meta_client = MetaClient(token=meta_token)
     bq_client = bq_service_account_auth(credentials=credentials)
@@ -73,7 +74,8 @@ def local_load():
         bq_client=bq_client,
         bq_project_id=bq_project_id,
         bq_dataset=bq_dataset,
-        start=start
+        start=start,
+        write_mode = write_mode if write_mode else 'truncate'
     )
     return {'message': 'Job executed successfully'}, 200
 
