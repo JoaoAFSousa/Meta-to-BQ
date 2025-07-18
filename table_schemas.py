@@ -23,7 +23,7 @@ adsets_schema = pa.DataFrameSchema({
     "status": pa.Column(pa.String),
     "campaign_id": pa.Column(pa.String),
     "billing_event": pa.Column(pa.String),
-    "daily_budget": pa.Column(pa.Float),
+    "daily_budget": pa.Column(pa.Float, nullable=True),
     "destination_type": pa.Column(pa.String),
     "optimization_goal": pa.Column(pa.String),
     "source_adset_id": pa.Column(pa.String, nullable=True),
