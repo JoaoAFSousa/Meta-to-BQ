@@ -38,8 +38,11 @@ class MetaClient:
                 try:
                     url = response_json['paging']['next']
                     response = requests.get(url)
-                    response_json = response.json()
-                    data.extend(response_json['data'])
+                    if response.status_code == 200:
+                        response_json = response.json()
+                        data.extend(response_json['data'])
+                    else:
+                        raise ValueError(response.text)
                 except KeyError:
                     break
             return data
@@ -86,8 +89,11 @@ class MetaClient:
                 try:
                     url = response_json['paging']['next']
                     response = requests.get(url=url)
-                    response_json = response.json()
-                    data.extend(response_json['data'])
+                    if response.status_code == 200:
+                        response_json = response.json()
+                        data.extend(response_json['data'])
+                    else:
+                        raise KeyError(response.text)
                 except KeyError:
                     break
             return data
@@ -161,8 +167,11 @@ class MetaClient:
             while True:
                 try:
                     response = requests.get(response_json['paging']['next'])
-                    response_json = response.json()
-                    ads_data.extend(response_json['data'])
+                    if response.status_code == 200:
+                        response_json = response.json()
+                        ads_data.extend(response_json['data'])
+                    else:
+                        raise KeyError(response.text)
                 except KeyError:
                     break
 
@@ -205,8 +214,11 @@ class MetaClient:
             while True:
                 try:
                     response = requests.get(response_json['paging']['next'])
-                    response_json = response.json()
-                    adsets.extend(response_json['data'])
+                    if response.status_code == 200:
+                        response_json = response.json()
+                        adsets.extend(response_json['data'])
+                    else:
+                        raise KeyError(response.text)
                 except KeyError:
                     break
 
@@ -247,8 +259,11 @@ class MetaClient:
             while True:
                 try:
                     response = requests.get(response_json['paging']['next'])
-                    response_json = response.json()
-                    campaigns.extend(response_json['data'])
+                    if response.status_code == 200:
+                        response_json = response.json()
+                        campaigns.extend(response_json['data'])
+                    else:
+                        raise KeyError(response.text)
                 except KeyError:
                     break
 
