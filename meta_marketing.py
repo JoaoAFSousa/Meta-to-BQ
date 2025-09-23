@@ -28,7 +28,7 @@ class MetaClient:
         params = {
             'access_token': self.token,
             'limit': 100,
-            'fields': 'name'
+            'fields': 'name,id'
         }
         response = requests.get(url, params=params)
         if response.status_code == 200:
