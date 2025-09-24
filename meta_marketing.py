@@ -1,6 +1,6 @@
-# Importing libraries
 import requests
 import pandas as pd
+
 from table_schemas import *
 
 class MetaClient:

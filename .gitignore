@@ -1,5 +1,6 @@
 # Ignore virtual environment directory
 venv/
+venv_dev/
 
 # Ignore .env file (for credentials, API keys, etc.)
 .env

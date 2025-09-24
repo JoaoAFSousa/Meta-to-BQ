@@ -1,84 +1,74 @@
-from jobs import bq_service_account_auth, update, load
-from meta_marketing import MetaClient
-from flask import Flask, request
-from google.cloud import bigquery
 import os
+from typing import List, Dict, Union, Optional
+from enum import Enum
 
-app = Flask(__name__)
+from fastapi import FastAPI
+from pydantic import BaseModel, Field
+from google.cloud import bigquery
+from google.oauth2 import service_account
 
-@app.route('/')
+from jobs import update, load
+from meta_marketing import MetaClient
+
+app = FastAPI()
+
+@app.get('/')
 def home():
-    return {'message': 'Service is running'}, 200
+    return {'message': 'Service is running'}
 
-# Local update enpoint
-@app.route('/update/local', methods=['POST'])
-def local_update():
-    data = request.get_json()
-    ad_account_ids = data.get('ad_account_ids')
-    meta_token = data.get('meta_token')
-    bq_project_id = data.get('bq_project_id')
-    bq_dataset = data.get('bq_dataset')
-    credentials = data.get('credentials')
-    # Credentials
-    meta_client = MetaClient(token=meta_token)
-    bq_client = bq_service_account_auth(credentials=credentials)
-    # Update
+class UpdateRequest(BaseModel):
+    ad_account_ids: Union[List[str], str]
+    meta_token: str
+    bq_project_id: str
+    bq_dataset: str
+    service_account_creds: Dict
+
+@app.post('/update')
+def update(req: UpdateRequest):
+    meta_client = MetaClient(token=req.meta_token)
+    bq_creds = service_account.Credentials.from_service_account_info(req.service_account_creds)
+    bq_client = bigquery.Client(credentials=bq_creds)
     update(
-        ad_account_ids=ad_account_ids,
+        ad_account_ids=req.ad_account_ids,
         meta_client=meta_client,
         bq_client=bq_client,
-        bq_project_id=bq_project_id,
-        bq_dataset=bq_dataset
+        bq_project_id=req.bq_project_id,
+        bq_dataset=req.bq_dataset
     )
-    return {'message': 'Job executed successfully'}, 200
+    return {'message': f'Data updated in {req.bq_dataset} dataset successfully.'}
 
-# Update endpoint
-@app.route('/update', methods=['POST'])
-def cloud_update():
-    data = request.get_json()
-    ad_account_ids = data.get('ad_account_ids')
-    meta_token = data.get('meta_token')
-    bq_project_id = data.get('bq_project_id')
-    bq_dataset = data.get('bq_dataset')
-    # Credentials
-    meta_client = MetaClient(token=meta_token)
-    bq_client = bigquery.Client()
-    # Update
-    update(
-        ad_account_ids=ad_account_ids,
-        meta_client=meta_client,
-        bq_client=bq_client,
-        bq_project_id=bq_project_id,
-        bq_dataset=bq_dataset
+class WriteMode(str, Enum):
+    append = 'append'
+    truncate = 'truncate'
+
+class LoadRequest(BaseModel):
+    ad_account_ids: List[str] | str
+    meta_token: str
+    bq_project_id: str
+    bq_dataset: str
+    service_account_creds: Dict
+    write_mode: Optional[WriteMode] = Field(
+        'truncate',
+        description="Write mode in BigQuery. If not specified, data will be truncated.",
+        example='truncate'
     )
-    return {'message': 'Job executed successfully'}, 200
+    start: str = Field(
+        description="Start date in format YYYY-MM-DD", 
+        example="2025-01-01"
+    )
 
-# Local loading data endpoint
-@app.route('/load/local', methods=['POST'])
-def local_load():
-    data = request.get_json()
-    ad_account_ids = data.get('ad_account_ids')
-    meta_token = data.get('meta_token')
-    bq_project_id = data.get('bq_project_id')
-    bq_dataset = data.get('bq_dataset')
-    start = data.get('start')
-    credentials = data.get('credentials')
-    write_mode = data.get('write_mode', None)
-    # Credentials
-    meta_client = MetaClient(token=meta_token)
-    bq_client = bq_service_account_auth(credentials=credentials)
-    # Update
+@app.post('/load')
+def load(req: LoadRequest):
+    meta_client = MetaClient(token=req.meta_token)
+    bq_creds = service_account.Credentials.from_service_account_info(req.service_account_creds)
+    bq_client = bigquery.Client(credentials=bq_creds)
     load(
-        ad_account_ids=ad_account_ids,
+        ad_account_ids=req.ad_account_ids,
         meta_client=meta_client,
         bq_client=bq_client,
-        bq_project_id=bq_project_id,
-        bq_dataset=bq_dataset,
-        start=start,
-        write_mode = write_mode if write_mode else 'truncate'
+        bq_project_id=req.bq_project_id,
+        bq_dataset=req.bq_dataset,
+        start=req.start,
+        write_mode = req.write_mode
     )
-    return {'message': 'Job executed successfully'}, 200
-
-# Entry point
-if __name__=='__main__':
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+    return {'message': 'Job executed successfully'}

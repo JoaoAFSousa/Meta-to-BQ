@@ -1,6 +1,5 @@
-import pandera as pa
+import pandera.pandas as pa
 
-# Define schema for campaigns table
 campaigns_schema = pa.DataFrameSchema({
     "account_id": pa.Column(pa.String),
     "id": pa.Column(pa.String),
@@ -13,7 +12,6 @@ campaigns_schema = pa.DataFrameSchema({
     "boosted_object_id": pa.Column(pa.String, nullable=True)
 }, strict='filter', coerce=True, add_missing_columns=True)
 
-# Define schema for adsets table
 adsets_schema = pa.DataFrameSchema({
     "account_id": pa.Column(pa.String),
     "created_time": pa.Column(pa.DateTime),
@@ -31,7 +29,6 @@ adsets_schema = pa.DataFrameSchema({
     "promoted_object_custom_event_type": pa.Column(pa.String, nullable=True)
 }, strict='filter', coerce=True, add_missing_columns=True)
 
-# Define schema for ads table
 ads_schema = pa.DataFrameSchema({
     "account_id": pa.Column(pa.String),
     "created_time": pa.Column(pa.DateTime),
@@ -46,7 +43,6 @@ ads_schema = pa.DataFrameSchema({
     "creative_id": pa.Column(pa.String)
 }, strict='filter', coerce=True, add_missing_columns=True)
 
-# Define schema for insights_ads table
 insights_ads_schema = pa.DataFrameSchema({
     "date": pa.Column(pa.DateTime),
     "account_id": pa.Column(pa.String),

@@ -1,33 +1,26 @@
-import pandas as pd
-from google.cloud import bigquery
-from google.oauth2 import service_account
 from datetime import datetime, timedelta, timezone
 import re
 import unicodedata
-from meta_marketing import MetaClient
 import asyncio
+
+import pandas as pd
+from google.cloud import bigquery
+from meta_marketing import MetaClient
 
 def text_to_snakecase(text):
     'Takes text input and return in snakecase format.'
-    # Normalize the string to decompose characters with accents
     normalized_text = unicodedata.normalize('NFKD', text)
-    # Remove accents by filtering out characters with Unicode category 'Mn' (Mark, Nonspacing)
     without_accents = ''.join([c for c in normalized_text if not unicodedata.category(c).startswith('M')])
-    # Remove any remaining special characters (only keep alphanumeric and spaces)
     cleaned_text = re.sub(r'[^A-Za-z0-9\s]', '', without_accents)
     snake_text = cleaned_text.lower().replace(' ', '_')
     return snake_text[:40]
 
-def bq_service_account_auth(credentials):
-    '''
-    Returns a client object to call the BigQuery API.
-    path: The path to the service account .json credentials file.
-    '''
-    credentials = service_account.Credentials.from_service_account_info(credentials)
-    client = bigquery.Client(credentials=credentials)
-    return client
-
-def df_to_bq(table_id, df, write_mode, client):
+def df_to_bq(
+        table_id: str, 
+        df: pd.DataFrame, 
+        write_mode: str, 
+        client: bigquery.Client
+    ):
     '''Takes a dataframe and writes it in a BigQuery table.'''
     if write_mode == 'truncate':
         job_config = bigquery.LoadJobConfig(write_disposition=bigquery.WriteDisposition.WRITE_TRUNCATE)
@@ -85,8 +78,8 @@ async def extract_accounts_async(
 
 def load(
     ad_account_ids: str | list,
-    meta_client,
-    bq_client,
+    meta_client: MetaClient,
+    bq_client: bigquery.Client,
     bq_project_id: str,
     bq_dataset: str,
     start: str,
@@ -125,8 +118,8 @@ def load(
         )
 
 def update(
-    meta_client, 
-    bq_client, 
+    meta_client: MetaClient, 
+    bq_client: bigquery.Client, 
     bq_project_id: str, 
     bq_dataset: str, 
     ad_account_ids: str | list
