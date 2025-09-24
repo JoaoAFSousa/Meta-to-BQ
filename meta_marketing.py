@@ -200,24 +200,74 @@ class MetaClient:
         else:
             raise KeyError(response.text)
 
-    def df_from_adsets(self, ad_account_id: str):
+    def df_from_adsets(self, ad_account_id: str, raw: bool = False):
         '''Calls data from adsets and returns it in a dataframe'''
         url = f'{self.url}/act_{ad_account_id}/adsets'
         fields = [
-            'account_id',
-            'account_name',
-            'created_time',
-            'end_time',
             'id',
-            'name',
-            'status',
+            'account_id',
+            'adlabels',
+            'adset_schedule',
+            # 'asset_feed_id',
+            'attribution_spec',
+            # 'bid_adjustments',
+            # 'bid_amount',
+            # 'bid_constraints',
+            # 'bid_info',
+            # 'bid_strategy',
+            # 'billing_event',
+            # 'brand_safety_config',
+            'budget_remaining',
+            # 'campaign',
+            'campaign_active_time',
+            'campaign_attribution',
             'campaign_id',
-            'billing_event',
+            'configured_status',
+            # 'contextual_bundling_spec',
+            'created_time',
+            # 'creative_sequence',
             'daily_budget',
+            'daily_min_spend_target',
+            'daily_spend_cap',
             'destination_type',
+            # 'dsa_beneficiary',
+            # 'dsa_payor',
+            'effective_status',
+            'end_time',
+            # 'frequency_control_specs',
+            # 'instagram_user_id',
+            # 'is_dynamic_creative',
+            # 'is_incremental_attribution_enabled',
+            # 'issues_info',
+            # 'learning_stage_info',
+            # 'lifetime_budget',
+            # 'lifetime_imps',
+            # 'lifetime_min_spend_target',
+            # 'lifetime_spend_cap',
+            # 'min_budget_spend_percentage',
+            # 'multi_optimization_goal_weight',
+            'name',
             'optimization_goal',
+            'optimization_sub_event',
+            'pacing_type',
             'promoted_object',
-            'source_adset_id'
+            # 'recommendations',
+            # 'recurring_budget_semantics',
+            # 'regional_regulated_categories',
+            # 'regional_regulation_identities',
+            # 'review_feedback',
+            # 'rf_prediction_id',
+            # 'source_adset',
+            'source_adset_id',
+            'start_time',
+            'status',
+            # 'targeting',
+            # 'targeting_optimization_types',
+            # 'time_based_ad_rotation_id_blocks',
+            # 'time_based_ad_rotation_intervals',
+            'updated_time',
+            # 'use_new_app_click',
+            # 'value_rule_set_id'
         ]
         params = {
             'fields': ','.join(fields),
@@ -239,11 +289,13 @@ class MetaClient:
                         raise KeyError(response.text)
                 except KeyError:
                     break
-
-            df = pd.json_normalize(adsets)
-            df.columns = [col_name.replace('.', '_') for col_name in df.columns]
-            df = adsets_schema.validate(df) if df.shape != (0, 0) else pd.DataFrame()
-            return df
+            if not raw:
+                df = pd.json_normalize(adsets)
+                df.columns = [col_name.replace('.', '_') for col_name in df.columns]
+                df = adsets_schema.validate(df) if df.shape != (0, 0) else pd.DataFrame()
+                return df
+            else:
+                return adsets
         else:
             raise KeyError(response.text)
 

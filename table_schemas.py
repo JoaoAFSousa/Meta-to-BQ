@@ -1,5 +1,4 @@
 import pandera.pandas as pa
-import pandas as pd
 
 campaigns_schema = pa.DataFrameSchema({
     "account_id": pa.Column(pa.String),
