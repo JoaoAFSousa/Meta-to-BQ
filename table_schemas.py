@@ -1,4 +1,5 @@
 import pandera.pandas as pa
+import pandas as pd
 
 campaigns_schema = pa.DataFrameSchema({
     "account_id": pa.Column(pa.String),
@@ -30,17 +31,34 @@ adsets_schema = pa.DataFrameSchema({
 }, strict='filter', coerce=True, add_missing_columns=True)
 
 ads_schema = pa.DataFrameSchema({
-    "account_id": pa.Column(pa.String),
-    "created_time": pa.Column(pa.DateTime),
-    "id": pa.Column(pa.String),
-    "adset_id": pa.Column(pa.String),
-    "campaign_id": pa.Column(pa.String),
-    "status": pa.Column(pa.String),
-    "name": pa.Column(pa.String),
-    "ad_active_time": pa.Column(pa.Int, nullable=False, default=0),
-    "source_ad_id": pa.Column(pa.String, nullable=True),
-    "preview_shareable_link": pa.Column(pa.String, nullable=True),
-    "creative_id": pa.Column(pa.String)
+    'id': pa.Column(pa.String),
+    'account_id': pa.Column(pa.String),
+    'ad_active_time': pa.Column(pa.Int, nullable=True),
+    'ad_review_feedback': pa.Column(pa.String, nullable=True),
+    'ad_schedule_end_time': pa.Column(pa.DateTime, nullable=True),
+    'ad_schedule_start_time': pa.Column(pa.DateTime, nullable=True),
+    'adlabels': pa.Column(pa.String, nullable=True),
+    # 'adset': pa.Column(pa.String),
+    'adset_id': pa.Column(pa.String),
+    'bid_amount': pa.Column(pa.Float, nullable=True),
+    # 'campaign': pa.Column(pa.String),
+    'campaign_id': pa.Column(pa.String),
+    'configured_status': pa.Column(pa.String),
+    'conversion_domain': pa.Column(pa.String, nullable=True),
+    'created_time': pa.Column(pa.DateTime),
+    'creative_id': pa.Column(pa.String),
+    'creative_asset_groups_spec': pa.Column(pa.String, nullable=True),
+    'effective_status': pa.Column(pa.String),
+    'issues_info': pa.Column(pa.String, nullable=True),
+    'last_updated_by_app_id': pa.Column(pa.String, nullable=True),
+    'name': pa.Column(pa.String),
+    'preview_shareable_link': pa.Column(pa.String),
+    'recommendations': pa.Column(pa.String, nullable=True),
+    # 'source_ad': pa.Column(pa.String, nullable=True),
+    'source_ad_id': pa.Column(pa.String, nullable=True),
+    'status': pa.Column(pa.String),
+    'tracking_specs': pa.Column(pa.String),
+    'updated_time': pa.Column(pa.DateTime)
 }, strict='filter', coerce=True, add_missing_columns=True)
 
 insights_ads_schema = pa.DataFrameSchema({

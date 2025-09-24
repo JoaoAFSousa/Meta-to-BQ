@@ -1,19 +1,9 @@
 from datetime import datetime, timedelta, timezone
-import re
-import unicodedata
 import asyncio
 
 import pandas as pd
 from google.cloud import bigquery
 from meta_marketing import MetaClient
-
-def text_to_snakecase(text):
-    'Takes text input and return in snakecase format.'
-    normalized_text = unicodedata.normalize('NFKD', text)
-    without_accents = ''.join([c for c in normalized_text if not unicodedata.category(c).startswith('M')])
-    cleaned_text = re.sub(r'[^A-Za-z0-9\s]', '', without_accents)
-    snake_text = cleaned_text.lower().replace(' ', '_')
-    return snake_text[:40]
 
 def df_to_bq(
         table_id: str, 

@@ -137,22 +137,38 @@ class MetaClient:
         else:
             return pd.DataFrame()
     
-    def df_from_ads(self, ad_account_id: str):
+    def df_from_ads(self, ad_account_id: str, raw: bool = False):
         '''Calls data from ads and returns it in a dataframe'''
         url = f'{self.url}/act_{ad_account_id}/ads'
         fields = [
-            'account_id',
-            'account_name',
-            'created_time',
             'id',
-            'adset_id',
-            'campaign_id',
-            'status',
-            'name',
+            'account_id',
             'ad_active_time',
+            'ad_review_feedback',
+            'ad_schedule_end_time',
+            'ad_schedule_start_time',
+            'adlabels',
+            # 'adset',
+            'adset_id',
+            'bid_amount',
+            # 'campaign',
+            'campaign_id',
+            'configured_status',
+            'conversion_domain',
+            'created_time',
             'creative',
+            'creative_asset_groups_spec',
+            'effective_status',
+            'issues_info',
+            'last_updated_by_app_id',
+            'name',
+            'preview_shareable_link',
+            'recommendations',
+            # 'source_ad',
             'source_ad_id',
-            'preview_shareable_link'
+            'status',
+            'tracking_specs',
+            'updated_time'
         ]
         params = {
             'fields': ','.join(fields),
@@ -174,11 +190,13 @@ class MetaClient:
                         raise KeyError(response.text)
                 except KeyError:
                     break
-
-            df = pd.json_normalize(ads_data)
-            df.columns = [col_name.replace('.', '_') for col_name in df.columns]
-            df = ads_schema.validate(df) if df.shape != (0, 0) else pd.DataFrame()
-            return df
+            if not raw:
+                df = pd.json_normalize(ads_data)
+                df.columns = [col_name.replace('.', '_') for col_name in df.columns]
+                df = ads_schema.validate(df) if df.shape != (0, 0) else pd.DataFrame()
+                return df
+            else:
+                return ads_data
         else:
             raise KeyError(response.text)
 
