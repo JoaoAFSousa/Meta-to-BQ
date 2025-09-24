@@ -258,22 +258,43 @@ class MetaClient:
         else:
             raise KeyError(response.text)
 
-    def df_from_campaigns(self, ad_account_id: str):
+    def df_from_campaigns(self, ad_account_id: str, raw: bool = False):
         '''Calls data from campaigns and returns it in a dataframe'''
         url = f'{self.url}/act_{ad_account_id}/campaigns'
         fields = [
-            'account_id',
-            'account_name',
             'id',
-            'name',
-            'status',
+            'account_id',
+            'adlabels',
+            'bid_strategy',
+            'boosted_object_id',
+            'budget_rebalance_flag',
+            'budget_remaining',
+            'buying_type',
+            'can_use_spend_cap',
+            'configured_status',
             'created_time',
-            'updated_time',
-            'stop_time',
             'daily_budget',
+            'effective_status',
+            'is_adset_budget_sharing_enabled',
+            'is_budget_schedule_enabled',
+            'is_direct_send_campaign',
+            'is_message_campaign',
+            'issues_info',
+            'last_budget_toggling_time',
+            'lifetime_budget',
+            'name',
             'objective',
+            'pacing_type',
+            'primary_attribution',
+            'promoted_object',
+            'smart_promotion_type',
             'source_campaign_id',
-            'boosted_object_id'
+            'spend_cap',
+            'start_time',
+            'status',
+            'stop_time',
+            'topline_id',
+            'updated_time'
         ]
         params = {
             'fields': ','.join(fields),
@@ -295,10 +316,12 @@ class MetaClient:
                         raise KeyError(response.text)
                 except KeyError:
                     break
-
-            df = pd.json_normalize(campaigns)
-            df.columns = [col_name.replace('.', '_') for col_name in df.columns]
-            df = campaigns_schema.validate(df) if df.shape != (0, 0) else pd.DataFrame()
-            return df
+            if not raw:
+                df = pd.json_normalize(campaigns)
+                df.columns = [col_name.replace('.', '_') for col_name in df.columns]
+                df = campaigns_schema.validate(df) if df.shape != (0, 0) else pd.DataFrame()
+                return df
+            else:
+                return campaigns
         else:
             raise KeyError(response.text)

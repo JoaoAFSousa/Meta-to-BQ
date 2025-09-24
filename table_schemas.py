@@ -1,15 +1,51 @@
 import pandera.pandas as pa
 
+# campaigns_schema = pa.DataFrameSchema({
+#     "account_id": pa.Column(pa.String),
+#     "id": pa.Column(pa.String),
+#     "name": pa.Column(pa.String),
+#     "status": pa.Column(pa.String),
+#     "created_time": pa.Column(pa.DateTime),
+#     "updated_time": pa.Column(pa.DateTime),
+#     "objective": pa.Column(pa.String),
+#     "source_campaign_id": pa.Column(pa.String, nullable=True),
+#     "boosted_object_id": pa.Column(pa.String, nullable=True)
+# }, strict='filter', coerce=True, add_missing_columns=True)
+
 campaigns_schema = pa.DataFrameSchema({
-    "account_id": pa.Column(pa.String),
-    "id": pa.Column(pa.String),
-    "name": pa.Column(pa.String),
-    "status": pa.Column(pa.String),
-    "created_time": pa.Column(pa.DateTime),
-    "updated_time": pa.Column(pa.DateTime),
-    "objective": pa.Column(pa.String),
-    "source_campaign_id": pa.Column(pa.String, nullable=True),
-    "boosted_object_id": pa.Column(pa.String, nullable=True)
+    'id': pa.Column(pa.String),
+    'account_id': pa.Column(pa.String),
+    'adlabels': pa.Column(pa.String, nullable=True),
+    'bid_strategy': pa.Column(pa.String, nullable=True),
+    'boosted_object_id': pa.Column(pa.String, nullable=True),
+    'budget_rebalance_flag': pa.Column(pa.Bool),
+    'budget_remaining': pa.Column(pa.Int),
+    'buying_type': pa.Column(pa.String),
+    'can_use_spend_cap': pa.Column(pa.Bool),
+    'configured_status': pa.Column(pa.String),
+    'created_time': pa.Column(pa.DateTime),
+    'daily_budget': pa.Column(pa.Float, nullable=True),
+    'effective_status': pa.Column(pa.String),
+    'is_adset_budget_sharing_enabled': pa.Column(pa.Bool),
+    'is_budget_schedule_enabled': pa.Column(pa.Bool),
+    'is_direct_send_campaign': pa.Column(pa.Bool),
+    'is_message_campaign': pa.Column(pa.Bool),
+    'issues_info': pa.Column(pa.String, nullable=True),
+    'last_budget_toggling_time': pa.Column(pa.DateTime, nullable=True),
+    'lifetime_budget': pa.Column(pa.Float, nullable=True),
+    'name': pa.Column(pa.String),
+    'objective': pa.Column(pa.String),
+    'pacing_type': pa.Column(pa.String, nullable=True),
+    'primary_attribution': pa.Column(pa.String),
+    'promoted_object': pa.Column(pa.String, nullable=True),
+    'smart_promotion_type': pa.Column(pa.String),
+    'source_campaign_id': pa.Column(pa.String),
+    'spend_cap': pa.Column(pa.Float, nullable=True),
+    'start_time': pa.Column(pa.DateTime),
+    'status': pa.Column(pa.String),
+    'stop_time': pa.Column(pa.DateTime, nullable=True),
+    'topline_id': pa.Column(pa.String),
+    'updated_time': pa.Column(pa.DateTime)
 }, strict='filter', coerce=True, add_missing_columns=True)
 
 adsets_schema = pa.DataFrameSchema({
