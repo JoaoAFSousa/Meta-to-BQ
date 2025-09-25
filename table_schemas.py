@@ -122,3 +122,23 @@ insights_ads_schema = pa.DataFrameSchema({
     'spend': pa.Column(pa.Float),
     'updated_time': pa.Column(pa.Date),
 }, strict='filter', coerce=True, add_missing_columns=True)
+
+insights_account_schema =  pa.DataFrameSchema({
+    'account_currency': pa.Column(pa.String),
+    'account_id': pa.Column(pa.String),
+    'account_name': pa.Column(pa.String),
+    'action_values': pa.Column(pa.String, nullable=True),
+    'actions': pa.Column(pa.String, nullable=True),
+    'attribution_setting': pa.Column(pa.String),
+    'clicks': pa.Column(pa.Int),
+    'conversion_values': pa.Column(pa.String, nullable=True),
+    'conversions': pa.Column(pa.String, nullable=True),
+    'date_start': pa.Column(pa.Date),
+    'date_stop': pa.Column(pa.Date),
+    'frequency': pa.Column(pa.Float),
+    'impressions': pa.Column(pa.Int),
+    'objective': pa.Column(pa.String),
+    'optimization_goal': pa.Column(pa.String),
+    'reach': pa.Column(pa.Int),
+    'spend': pa.Column(pa.Float),
+}, strict='filter', coerce=True, add_missing_columns=True)
