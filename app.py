@@ -1,5 +1,6 @@
 from typing import List, Dict, Union, Optional
 from enum import Enum
+from datetime import datetime, timedelta
 
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
@@ -51,8 +52,14 @@ class LoadRequest(BaseModel):
         description="Write mode in BigQuery. If not specified, data will be truncated.",
         example='truncate'
     )
+    tables: Optional[List[str]]
     start: str = Field(
         description="Start date in format YYYY-MM-DD", 
+        example="2025-01-01"
+    )
+    end: str = Field(
+        (datetime.today() - timedelta(1)).strftime('%Y-%m-%d'),
+        description="End date in format YYYY-MM-DD, defaults to yesterday.", 
         example="2025-01-01"
     )
 
@@ -68,6 +75,8 @@ def load_endpoint(req: LoadRequest):
         bq_project_id=req.bq_project_id,
         bq_dataset=req.bq_dataset,
         start=req.start,
-        write_mode = req.write_mode
+        end=req.end,
+        write_mode = req.write_mode,
+        tables=req.tables
     )
     return {'message': 'Job executed successfully'}

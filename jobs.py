@@ -31,14 +31,26 @@ def extract_account(
     ad_account_id: str, 
     meta_client, 
     start: str,
-    end: str = (datetime.today() - timedelta(1)).strftime('%Y-%m-%d')
+    end: str = (datetime.today() - timedelta(1)).strftime('%Y-%m-%d'),
+    tables: list = ['campaigns', 'adsets', 'ads', 'insights_ads']
 ):
-    df_campaigns = meta_client.df_from_campaigns(ad_account_id=ad_account_id)
-    df_adsets = meta_client.df_from_adsets(ad_account_id=ad_account_id)
-    df_ads = meta_client.df_from_ads(ad_account_id=ad_account_id)
-    df_insights = meta_client.df_from_ad_insights(start=start, end=end, ad_account_id=ad_account_id)
-    return (df_campaigns, df_adsets, df_ads, df_insights)
+    dict_tables = {}
+    if tables.count('campaigns') == 1:
+        df_campaigns = meta_client.df_from_campaigns(ad_account_id=ad_account_id)
+        dict_tables.update({'campaigns': df_campaigns})
+    if tables.count('adsets') == 1:
+        df_adsets = meta_client.df_from_adsets(ad_account_id=ad_account_id)
+        dict_tables.update({'adsets': df_adsets})
+    if tables.count('ads') == 1:
+        df_ads = meta_client.df_from_ads(ad_account_id=ad_account_id)
+        dict_tables.update({'ads': df_ads})
+    if tables.count('insights_ads') == 1:
+        df_insights = meta_client.df_from_ad_insights(start=start, end=end, ad_account_id=ad_account_id)
+        dict_tables.update({'insights_ads': df_insights})
+    
+    return dict_tables
 
+# MULTIPLE ACCOUNTS EXTRACTION SUSPENDED IN LOAD JOB - REIMPLAMENTATION WILL BE EVALUATED
 async def extract_account_async(
     ad_account_id: str, 
     meta_client, 
@@ -74,7 +86,8 @@ def load(
     bq_dataset: str,
     start: str,
     end: str = (datetime.today() - timedelta(1)).strftime('%Y-%m-%d'),
-    write_mode: str = 'truncate'
+    write_mode: str = 'truncate',
+    tables: list = ['campaigns', 'adsets', 'ads', 'insights_ads']
 ):
     'Loads data from a list of ad account into a BQ dataset.'
     # Creating dataset if it doesn't exist yet (it will be overwritten if exists)
@@ -83,22 +96,14 @@ def load(
     
     dataset_query = f'''CREATE SCHEMA IF NOT EXISTS `{bq_project_id}.{bq_dataset}`'''
     bq_client.query(dataset_query)
-    # Extracting data to dataframes
-    df_campaigns, df_adsets, df_ads, df_insights = asyncio.run(
-        extract_accounts_async(
-            ad_account_ids, 
-            meta_client, 
-            start,
-            end
-        )
+
+    dict_tables = extract_account(
+        ad_account_id=ad_account_ids,
+        meta_client=meta_client,
+        start=start,
+        end=end,
+        tables=tables
     )
-    # Loading tables to BigQuery
-    dict_tables = {
-        'campaigns': df_campaigns,
-        'adsets': df_adsets,
-        'ads': df_ads,
-        'insights_ads': df_insights
-    }
     for table, df in dict_tables.items():
         df_to_bq(
             table_id=f'{bq_project_id}.{bq_dataset}.{table}', 
@@ -106,6 +111,7 @@ def load(
             write_mode=write_mode,
             client=bq_client
         )
+        print(f'Data loaded in {bq_project_id}.{bq_dataset}.{table}')
 
 def update(
     meta_client: MetaClient, 
