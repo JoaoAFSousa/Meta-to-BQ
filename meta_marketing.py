@@ -1,7 +1,25 @@
+import time
+
 import requests
 import pandas as pd
 
 from table_schemas import *
+
+def request_w_retries(url, params=None, max_retries=3, wait_seconds=20):
+    """Helper to perform GET with retry logic."""
+    retries = 0
+    while retries < max_retries:
+        response = requests.get(url, params=params)
+        if response.status_code == 200:
+            return response
+        else:
+            retries += 1
+            if retries < max_retries:
+                print(f"Error: {response.text}. Retrying {retries}/{max_retries} in {wait_seconds}s...")
+                time.sleep(wait_seconds)
+            else:
+                raise KeyError(f"Failed after {max_retries} retries: {response.text}")
+    return None  # safeguard, should never hit
 
 class MetaClient:
     def __init__(self, token: str = None):
@@ -49,7 +67,14 @@ class MetaClient:
         else:
             raise ValueError(response.text)
 
-    def call_insights_data(self, level: str, start: str, end: str, ad_account_id: str):
+    def call_insights_data(
+            self, 
+            level: str, 
+            start: str, 
+            end: str, 
+            ad_account_id: str,
+            time_increment: int | str = 1
+        ):
         '''
         Calls insights data from ad account, at the level specified.
         level: 'account', 'ad', 'adset' or 'campaign'.
@@ -57,38 +82,50 @@ class MetaClient:
         '''
         url = f'{self.url}/act_{ad_account_id}/insights'
         fields = [
+            'account_currency',
             'account_id',
             'account_name',
-            f'{level}_id',
-            f'{level}_name',
+            'action_values',
+            'actions',
+            'ad_id',
+            'ad_name',
+            'adset_id',
+            'adset_name',
+            'attribution_setting',
+            'campaign_id',
+            'campaign_name',
+            'clicks',
+            'conversion_values',
+            'conversions',
+            'created_time',
+            'date_start',
+            'date_stop',
+            'frequency',
+            'impressions',
             'objective',
             'optimization_goal',
-            'impressions',
             'reach',
-            'actions',
+            'results',
             'spend',
-            'video_p25_watched_actions',
-            'video_p50_watched_actions',
-            'video_p75_watched_actions',
-            'video_p95_watched_actions',
-            'video_p100_watched_actions'
+            'updated_time'
         ]
         params = {
             'level': level,
             'fields': ','.join(fields),
             'time_range': f"{'{'}'since': '{start}','until': '{end}'{'}'}",
-            'time_increment': 1,
+            'time_increment': time_increment,
             'limit': 100,
             'access_token': self.token
         }
-        response = requests.get(url, params=params)
+        response = request_w_retries(url, params=params) # requests.get(url, params=params)
         if response.status_code == 200:
             response_json = response.json()
             data = response_json['data']
             while True: 
                 try:
+                    time.sleep(1) # Add parameter
                     url = response_json['paging']['next']
-                    response = requests.get(url=url)
+                    response = request_w_retries(url) # requests.get(url=url)
                     if response.status_code == 200:
                         response_json = response.json()
                         data.extend(response_json['data'])
@@ -100,38 +137,14 @@ class MetaClient:
         else:
             raise KeyError(response.text)
 
-    def df_from_ad_insights(self, start: str, end: str, ad_account_id: str):
+    def df_from_ad_insights(self, start: str, end: str, ad_account_id: str, raw: bool = False):
         '''Takes a .json file from insights data and returns a dataframe'''
         data = self.call_insights_data(level='ad', start=start, end=end, ad_account_id=ad_account_id)
-        normal_data = []
+        if raw:
+            return data
         if len(data) > 0:
-            for item in data:
-                try: 
-                    action_fields = {f"action_{action['action_type']}": action['value'] for action in item['actions']}
-                except KeyError:
-                    action_fields = {}
-                normal_item = {
-                    'date': item['date_start'],
-                    'account_id': item['account_id'],
-                    'account_name': item['account_name'],
-                    'ad_id': item['ad_id'],
-                    'ad_name': item['ad_name'],
-                    'objective': item['objective'],
-                    'optimization_goal': item['optimization_goal'],
-                    'impressions': item.get('impressions', 0),
-                    'reach': item.get('reach', 0),
-                    'video_p25_watched_actions': item.get('video_p25_watched_actions', [{}])[0].get('value', None),
-                    'video_p50_watched_actions': item.get('video_p50_watched_actions', [{}])[0].get('value', None),
-                    'video_p75_watched_actions': item.get('video_p75_watched_actions', [{}])[0].get('value', None),
-                    'video_p95_watched_actions': item.get('video_p95_watched_actions', [{}])[0].get('value', None),
-                    'video_p100_watched_actions': item.get('video_p100_watched_actions', [{}])[0].get('value', None),
-                    'spend': item['spend']
-                }
-                normal_item.update(action_fields)
-                normal_data.append(normal_item)
-            df = pd.json_normalize(normal_data)
+            df = pd.json_normalize(data)
             df.columns = [col_name.replace('.', '_') for col_name in df.columns]
-            df['date'] = pd.to_datetime(df['date'])
             df = insights_ads_schema.validate(df)
             return df
         else:
@@ -179,6 +192,7 @@ class MetaClient:
             ads_data = response_json['data']
             while True:
                 try:
+                    time.sleep(1) # Add parameter
                     response = requests.get(response_json['paging']['next'])
                     if response.status_code == 200:
                         response_json = response.json()
@@ -240,6 +254,7 @@ class MetaClient:
             adsets = response_json['data']
             while True:
                 try:
+                    time.sleep(1) # Add parameter
                     response = requests.get(response_json['paging']['next'])
                     if response.status_code == 200:
                         response_json = response.json()
@@ -308,6 +323,7 @@ class MetaClient:
             campaigns = response_json['data']
             while True:
                 try:
+                    time.sleep(1) # Add parameter
                     response = requests.get(response_json['paging']['next'])
                     if response.status_code == 200:
                         response_json = response.json()

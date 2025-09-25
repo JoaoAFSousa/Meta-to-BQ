@@ -23,7 +23,7 @@ class UpdateRequest(BaseModel):
     service_account_creds: Dict
 
 @app.post('/update')
-def update(req: UpdateRequest):
+def update_endpoint(req: UpdateRequest):
     meta_client = MetaClient(token=req.meta_token)
     bq_creds = service_account.Credentials.from_service_account_info(req.service_account_creds)
     bq_client = bigquery.Client(credentials=bq_creds)
@@ -41,7 +41,7 @@ class WriteMode(str, Enum):
     truncate = 'truncate'
 
 class LoadRequest(BaseModel):
-    ad_account_ids: List[str] | str
+    ad_account_ids: Union[List[str], str]
     meta_token: str
     bq_project_id: str
     bq_dataset: str
@@ -57,7 +57,7 @@ class LoadRequest(BaseModel):
     )
 
 @app.post('/load')
-def load(req: LoadRequest):
+def load_endpoint(req: LoadRequest):
     meta_client = MetaClient(token=req.meta_token)
     bq_creds = service_account.Credentials.from_service_account_info(req.service_account_creds)
     bq_client = bigquery.Client(credentials=bq_creds)
