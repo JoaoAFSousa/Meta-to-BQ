@@ -53,6 +53,9 @@ def extract_account(
     if tables.count('monthly_insights_ads') == 1:
         df_monthly_insights_ads = meta_client.df_from_monthly_insights_ads(start=start, end=end, ad_account_id=ad_account_id)
         dict_tables.update({'monthly_insights_ads': df_monthly_insights_ads})    
+    if tables.count('monthly_insights_campaigns') == 1:
+        df_monthly_insights_campaigns = meta_client.df_from_monthly_insights_campaigns(start=start, end=end, ad_account_id=ad_account_id)
+        dict_tables.update({'monthly_insights_campaigns': df_monthly_insights_campaigns})
     
     return dict_tables
 

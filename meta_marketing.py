@@ -174,6 +174,18 @@ class MetaClient:
         else:
             return pd.DataFrame()
     
+    def df_from_monthly_insights_campaigns(self, start: str, end: str, ad_account_id: str, raw: bool = False):
+        data = self.call_insights_data(level='campaign', start=start, end=end, ad_account_id=ad_account_id, time_increment='monthly')
+        if raw:
+            return data
+        if len(data) > 0:
+            df = pd.json_normalize(data)
+            df.columns = [col_name.replace('.', '_') for col_name in df.columns]
+            df = insights_campaign_schema.validate(df)
+            return df
+        else:
+            return pd.DataFrame()
+    
     def df_from_ads(self, ad_account_id: str, raw: bool = False):
         '''Calls data from ads and returns it in a dataframe'''
         url = f'{self.url}/act_{ad_account_id}/ads'
