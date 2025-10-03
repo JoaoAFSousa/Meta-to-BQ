@@ -48,9 +48,9 @@ class LoadRequest(BaseModel):
     bq_dataset: str
     service_account_creds: Dict
     write_mode: Optional[WriteMode] = Field(
-        'truncate',
+        'append',
         description="Write mode in BigQuery. If not specified, data will be truncated.",
-        example='truncate'
+        example='append'
     )
     tables: Optional[List[str]]
     start: str = Field(

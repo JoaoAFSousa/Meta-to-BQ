@@ -93,9 +93,9 @@ def load(
     bq_client: bigquery.Client,
     bq_project_id: str,
     bq_dataset: str,
-    start: str,
+    start: str = datetime(datetime.now().year, datetime.now().month, 1).strftime('%Y%m%d'),
     end: str = (datetime.today() - timedelta(1)).strftime('%Y-%m-%d'),
-    write_mode: str = 'truncate',
+    write_mode: str = 'append',
     tables: list = ['campaigns', 'adsets', 'ads', 'insights_ads']
 ):
     'Loads data from a list of ad account into a BQ dataset.'
@@ -114,10 +114,29 @@ def load(
         tables=tables
     )
     for table, df in dict_tables.items():
+        write_mode_internal = 'truncate'
+        if table.count('insights') == 1 and write_mode == 'append': # Deletes data to be overwritten
+            write_mode_internal = 'append'
+            ad_accounts_str = "', '".join(ad_account_ids) if isinstance(ad_account_ids, list) else ad_account_ids
+            count_query = f'''
+                SELECT COUNT(*) AS data_count
+                FROM {bq_project_id}.{bq_dataset}.{table}
+                WHERE 
+                    account_id IN ('{ad_accounts_str}')
+                    AND date_start >= '{start}'
+                    AND date_start <= '{end}'
+            '''
+            del_query = count_query.replace('SELECT COUNT(*) AS data_count', 'DELETE')
+            df_count = bq_client.query(count_query).to_dataframe()
+            if df_count['data_count'][0] > 0:
+                del_job = bq_client.query(del_query)
+                del_job.result()
+                print(f'{df_count['data_count'][0]} rows to be deleted from {bq_project_id}.{bq_dataset}.{table}, account_ids: {ad_accounts_str}, start: {start} for update.')
+        
         df_to_bq(
             table_id=f'{bq_project_id}.{bq_dataset}.{table}', 
             df=df, 
-            write_mode=write_mode,
+            write_mode=write_mode_internal,
             client=bq_client
         )
         print(f'Data loaded in {bq_project_id}.{bq_dataset}.{table}')
