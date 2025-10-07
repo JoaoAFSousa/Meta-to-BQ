@@ -377,3 +377,55 @@ class MetaClient:
                 return campaigns
         else:
             raise KeyError(response.text)
+        
+    def df_from_adcreatives(self, ad_account_id: str, raw: bool = False):
+        '''Calls data from adcreatives and returns it in a dataframe'''
+        url = f'{self.url}/act_{ad_account_id}/adcreatives'
+        fields = [
+            'id',
+            'account_id',
+            'body',
+            'effective_instagram_media_id',
+            'effective_object_story_id',
+            'instagram_permalink_url',
+            'name',
+            'status',
+            'thumbnail_url',
+            'title'
+        ]
+        params = {
+            'fields': ','.join(fields),
+            'date_preset': 'maximum',
+            'limit': 100,
+            'access_token': self.token
+        }
+        # response = request_w_retries(url, params=params)
+        response = requests.get(url, params=params)
+        print('First request, ', response.status_code)
+        if response.status_code == 200:
+            response_json = response.json()
+            adcreatives = response_json['data']
+            while True:
+                try:
+                    time.sleep(1) # Add parameter
+                    response = request_w_retries(response_json['paging']['next'])
+                    # response = requests.get(response_json['paging']['next'])
+                    print('Request, ', response.status_code)
+                    if response.status_code == 200:
+                        response_json = response.json()
+                        adcreatives.extend(response_json['data'])
+                    else:
+                        raise KeyError(response.text)
+                except KeyError:
+                    print(response.text)
+                    break
+            if not raw:
+                # df = pd.json_normalize(adcreatives)
+                # df.columns = [col_name.replace('.', '_') for col_name in df.columns]
+                # df = new_schema.validate(df) if df.shape != (0, 0) else pd.DataFrame()
+                # return df
+                pass
+            else:
+                return adcreatives
+        else:
+            raise KeyError(response.text)

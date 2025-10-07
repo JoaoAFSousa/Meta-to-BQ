@@ -167,3 +167,16 @@ insights_campaign_schema = pa.DataFrameSchema({
     'spend': pa.Column(pa.Float),
     'updated_time': pa.Column(pa.Date),
 }, strict='filter', coerce=True, add_missing_columns=True)
+
+adcreatives_schema = pa.DataFrameSchema({
+    'id': pa.Column(pa.String),
+    'account_id': pa.Column(pa.String),
+    'body': pa.Column(pa.String),
+    'effective_instagram_media_id': pa.Column(pa.String, nullable=True),
+    'effective_object_story_id': pa.Column(pa.String),
+    'instagram_permalink_url': pa.Column(pa.String, nullable=True),
+    'name': pa.Column(pa.String),
+    'status': pa.Column(pa.String),
+    'thumbnail_url': pa.Column(pa.String, nullable=True),
+    'title': pa.Column(pa.String, nullable=True)
+}, strict='filter', coerce=True, add_missing_columns=True)
