@@ -29,7 +29,7 @@ def df_to_bq(
         job = client.load_table_from_dataframe(df, table_id, job_config=job_config)
         job.result()
     else:
-        logger.warning(df, '\n => Dataframe is empty, no data loaded in bigquery.')
+        logger.warning(f'{table_id} \n => Dataframe is empty, no data loaded in bigquery.')
 
 def extract_account(
     ad_account_id: str, 
