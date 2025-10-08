@@ -1,6 +1,7 @@
 from typing import List, Dict, Union, Optional
 from enum import Enum
 from datetime import datetime, timedelta
+import logging
 
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
@@ -10,6 +11,12 @@ from google.oauth2 import service_account
 from jobs import update, load
 from meta_marketing import MetaClient
 
+logging.basicConfig(
+    level=logging.INFO, 
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+
+logger = logging.getLogger(__name__)
 app = FastAPI()
 
 @app.get('/')

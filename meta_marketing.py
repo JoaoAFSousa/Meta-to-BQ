@@ -1,10 +1,13 @@
 import time
+import logging
 
 import requests
 import pandas as pd
 from pandera.pandas import DataFrameSchema
 
 from table_schemas import *
+
+logger = logging.getLogger(__name__)
 
 def request_w_retries(url, params=None, max_retries=4, base_wait=30):
     """Helper to perform GET with retry logic."""
@@ -17,7 +20,7 @@ def request_w_retries(url, params=None, max_retries=4, base_wait=30):
             time_to_wait = base_wait * (2 ** retries)
             retries += 1
             if retries < max_retries:
-                print(f"Error: {response.text}. Retrying {retries}/{max_retries} in {time_to_wait}s...")
+                logger.info(f"Error: {response.text}. Retrying {retries}/{max_retries} in {time_to_wait}s...")
                 time.sleep(time_to_wait)
             else:
                 raise RuntimeError(f"Failed after {max_retries} retries: {response.text}")
@@ -34,18 +37,18 @@ def get_w_pagination(url, params: dict = {}, t_between_calls=1):
                 next_url = response_json['paging']['next']
             except KeyError:
                 # LOOP FOR DEBUGGING
-                print('Last page response:')
+                logger.info('Last page response:')
                 for key, value in response_json.items():
                     if key == 'data':
-                        print('Data with length: ', len(value))
+                        logger.info(f'Data with length: {len(value)}')
                     else:
-                        print(key, ': ', value)
+                        logger.info(f'{key} : {value}')
                 break
             response = request_w_retries(next_url)
             if response.status_code == 200:
                 attempt = 0
                 while len(response.json()['data']) == 0 and attempt < 5:  # Handles empty responses
-                    print('Got empty data!!! Retrying API call...')
+                    logger.warning('Got empty data!!! Retrying API call...')
                     response = request_w_retries(next_url)
                     attempt += 1
                 response_json = response.json()

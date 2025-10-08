@@ -1,10 +1,13 @@
 from datetime import datetime, timedelta, timezone
 import asyncio
+import logging
 
 import pandas as pd
 from google.cloud import bigquery
 from meta_marketing import MetaClient
 from google.api_core.exceptions import NotFound
+
+logger = logging.getLogger(__name__)
 
 def df_to_bq(
         table_id: str, 
@@ -21,12 +24,12 @@ def df_to_bq(
             schema_update_options=bigquery.SchemaUpdateOption.ALLOW_FIELD_ADDITION
         )
     else:
-        print("Invalid write mode value. \nPlease insert 'truncate' or 'append'.")
+        logger.error("Invalid write mode value. \nPlease insert 'truncate' or 'append'.")
     if df.shape[0] > 0:
         job = client.load_table_from_dataframe(df, table_id, job_config=job_config)
         job.result()
     else:
-        print(df, '\n => Dataframe is empty, no data loaded in bigquery.')
+        logger.warning(df, '\n => Dataframe is empty, no data loaded in bigquery.')
 
 def extract_account(
     ad_account_id: str, 
@@ -143,7 +146,7 @@ def load(
             if df_count['data_count'][0] > 0:
                 del_job = bq_client.query(del_query)
                 del_job.result()
-                print(f'{df_count['data_count'][0]} rows to be deleted from {bq_project_id}.{bq_dataset}.{table}, account_ids: {ad_accounts_str}, start: {start} for update.')
+                logger.info(f'{df_count['data_count'][0]} rows to be deleted from {bq_project_id}.{bq_dataset}.{table}, account_ids: {ad_accounts_str}, start: {start} for update.')
         except NotFound:  # In case the table doesn't exist yet.
             pass
         
@@ -153,7 +156,7 @@ def load(
             write_mode=write_mode_internal,
             client=bq_client
         )
-        print(f'Data loaded in {bq_project_id}.{bq_dataset}.{table}')
+        logger.info(f'Data loaded in {bq_project_id}.{bq_dataset}.{table}')
 
 def update(
     meta_client: MetaClient, 
@@ -197,6 +200,6 @@ def update(
                 client=bq_client
             )
     elif last_upd == datetime.strptime(yesterday, '%Y-%m-%d'):
-        print('Insights already updated until yesterday.')
+        logger.info('Insights already updated until yesterday.')
     else:
-        print('Last update greater that yesterday!!! That should not happen!')
+        logger.warning('Last update greater that yesterday!!! That should not happen!')
