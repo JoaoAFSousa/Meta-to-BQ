@@ -4,6 +4,7 @@ import asyncio
 import pandas as pd
 from google.cloud import bigquery
 from meta_marketing import MetaClient
+from google.api_core.exceptions import NotFound
 
 def df_to_bq(
         table_id: str, 
@@ -56,6 +57,9 @@ def extract_account(
     if tables.count('monthly_insights_campaigns') == 1:
         df_monthly_insights_campaigns = meta_client.df_from_monthly_insights_campaigns(start=start, end=end, ad_account_id=ad_account_id)
         dict_tables.update({'monthly_insights_campaigns': df_monthly_insights_campaigns})
+    if tables.count('adcreatives') == 1:
+        df_adcreatives = meta_client.df_from_adcreatives(ad_account_id=ad_account_id)
+        dict_tables.update({'adcreatives': df_adcreatives})
     
     return dict_tables
 
@@ -114,10 +118,9 @@ def load(
         tables=tables
     )
     for table, df in dict_tables.items():
-        write_mode_internal = 'truncate'
+        write_mode_internal = 'append'
+        ad_accounts_str = "', '".join(ad_account_ids) if isinstance(ad_account_ids, list) else ad_account_ids
         if table.count('insights') == 1 and write_mode == 'append': # Deletes data to be overwritten
-            write_mode_internal = 'append'
-            ad_accounts_str = "', '".join(ad_account_ids) if isinstance(ad_account_ids, list) else ad_account_ids
             count_query = f'''
                 SELECT COUNT(*) AS data_count
                 FROM {bq_project_id}.{bq_dataset}.{table}
@@ -126,12 +129,23 @@ def load(
                     AND date_start >= '{start}'
                     AND date_start <= '{end}'
             '''
-            del_query = count_query.replace('SELECT COUNT(*) AS data_count', 'DELETE')
+        else:
+            count_query = f'''
+                SELECT COUNT(*) AS data_count
+                FROM {bq_project_id}.{bq_dataset}.{table}
+                WHERE 
+                    account_id IN ('{ad_accounts_str}')
+            '''
+
+        del_query = count_query.replace('SELECT COUNT(*) AS data_count', 'DELETE')
+        try:
             df_count = bq_client.query(count_query).to_dataframe()
             if df_count['data_count'][0] > 0:
                 del_job = bq_client.query(del_query)
                 del_job.result()
                 print(f'{df_count['data_count'][0]} rows to be deleted from {bq_project_id}.{bq_dataset}.{table}, account_ids: {ad_accounts_str}, start: {start} for update.')
+        except NotFound:  # In case the table doesn't exist yet.
+            pass
         
         df_to_bq(
             table_id=f'{bq_project_id}.{bq_dataset}.{table}', 

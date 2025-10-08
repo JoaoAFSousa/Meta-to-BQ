@@ -171,9 +171,9 @@ insights_campaign_schema = pa.DataFrameSchema({
 adcreatives_schema = pa.DataFrameSchema({
     'id': pa.Column(pa.String),
     'account_id': pa.Column(pa.String),
-    'body': pa.Column(pa.String),
+    'body': pa.Column(pa.String, nullable=True),
     'effective_instagram_media_id': pa.Column(pa.String, nullable=True),
-    'effective_object_story_id': pa.Column(pa.String),
+    'effective_object_story_id': pa.Column(pa.String, nullable=True),
     'instagram_permalink_url': pa.Column(pa.String, nullable=True),
     'name': pa.Column(pa.String),
     'status': pa.Column(pa.String),

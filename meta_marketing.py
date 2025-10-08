@@ -2,10 +2,11 @@ import time
 
 import requests
 import pandas as pd
+from pandera.pandas import DataFrameSchema
 
 from table_schemas import *
 
-def request_w_retries(url, params=None, max_retries=3, wait_seconds=20):
+def request_w_retries(url, params=None, max_retries=4, base_wait=30):
     """Helper to perform GET with retry logic."""
     retries = 0
     while retries < max_retries:
@@ -13,13 +14,54 @@ def request_w_retries(url, params=None, max_retries=3, wait_seconds=20):
         if response.status_code == 200:
             return response
         else:
+            time_to_wait = base_wait * (2 ** retries)
             retries += 1
             if retries < max_retries:
-                print(f"Error: {response.text}. Retrying {retries}/{max_retries} in {wait_seconds}s...")
-                time.sleep(wait_seconds)
+                print(f"Error: {response.text}. Retrying {retries}/{max_retries} in {time_to_wait}s...")
+                time.sleep(time_to_wait)
             else:
-                raise KeyError(f"Failed after {max_retries} retries: {response.text}")
+                raise RuntimeError(f"Failed after {max_retries} retries: {response.text}")
     return None  # safeguard, should never hit
+
+def get_w_pagination(url, params: dict = {}, t_between_calls=1):
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        response_json =  response.json()
+        data = response_json['data']
+        while True:
+            time.sleep(t_between_calls)
+            try:
+                next_url = response_json['paging']['next']
+            except KeyError:
+                # LOOP FOR DEBUGGING
+                print('Last page response:')
+                for key, value in response_json.items():
+                    if key == 'data':
+                        print('Data with length: ', len(value))
+                    else:
+                        print(key, ': ', value)
+                break
+            response = request_w_retries(next_url)
+            if response.status_code == 200:
+                attempt = 0
+                while len(response.json()['data']) == 0 and attempt < 5:  # Handles empty responses
+                    print('Got empty data!!! Retrying API call...')
+                    response = request_w_retries(next_url)
+                    attempt += 1
+                response_json = response.json()
+                data.extend(response_json['data'])
+            else:
+                raise KeyError("Error: ", response.status_code, response.text)  # Response error should be handled in request_w_retries.Probably will not ever fall here.
+        return data
+    else:
+        raise KeyError("Error: ", response.status_code, response.text)
+    
+def json_to_df_val(data_json: dict, table_schema: DataFrameSchema):
+    '''Normalizes json (dict) to dataframe and validates schema.'''
+    df = pd.json_normalize(data_json)
+    df.columns = [col_name.replace('.', '_') for col_name in df.columns]
+    df = table_schema.validate(df) if df.shape != (0, 0) else pd.DataFrame()
+    return df
 
 class MetaClient:
     def __init__(self, token: str = None):
@@ -48,24 +90,8 @@ class MetaClient:
             'limit': 100,
             'fields': 'name,id'
         }
-        response = requests.get(url, params=params)
-        if response.status_code == 200:
-            response_json = response.json()
-            data = response_json['data']
-            while True:
-                try:
-                    url = response_json['paging']['next']
-                    response = requests.get(url)
-                    if response.status_code == 200:
-                        response_json = response.json()
-                        data.extend(response_json['data'])
-                    else:
-                        raise ValueError(response.text)
-                except KeyError:
-                    break
-            return data
-        else:
-            raise ValueError(response.text)
+        data = get_w_pagination(url, params=params)
+        return data
 
     def call_insights_data(
             self, 
@@ -117,25 +143,8 @@ class MetaClient:
             'limit': 100,
             'access_token': self.token
         }
-        response = request_w_retries(url, params=params) # requests.get(url, params=params)
-        if response.status_code == 200:
-            response_json = response.json()
-            data = response_json['data']
-            while True: 
-                try:
-                    time.sleep(1) # Add parameter
-                    url = response_json['paging']['next']
-                    response = request_w_retries(url) # requests.get(url=url)
-                    if response.status_code == 200:
-                        response_json = response.json()
-                        data.extend(response_json['data'])
-                    else:
-                        raise KeyError(response.text)
-                except KeyError:
-                    break
-            return data
-        else:
-            raise KeyError(response.text)
+        data = get_w_pagination(url, params=params)
+        return data
 
     def df_from_ad_insights(self, start: str, end: str, ad_account_id: str, raw: bool = False):
         '''Takes a .json file from insights data and returns a dataframe'''
@@ -143,9 +152,7 @@ class MetaClient:
         if raw:
             return data
         if len(data) > 0:
-            df = pd.json_normalize(data)
-            df.columns = [col_name.replace('.', '_') for col_name in df.columns]
-            df = insights_ads_schema.validate(df)
+            df = json_to_df_val(data, insights_ads_schema)
             return df
         else:
             return pd.DataFrame()
@@ -155,9 +162,7 @@ class MetaClient:
         if raw:
             return data
         if len(data) > 0:
-            df = pd.json_normalize(data)
-            df.columns = [col_name.replace('.', '_') for col_name in df.columns]
-            df = insights_account_schema.validate(df)
+            df = json_to_df_val(data, insights_account_schema)
             return df
         else:
             return pd.DataFrame()
@@ -167,9 +172,7 @@ class MetaClient:
         if raw:
             return data
         if len(data) > 0:
-            df = pd.json_normalize(data)
-            df.columns = [col_name.replace('.', '_') for col_name in df.columns]
-            df = insights_ads_schema.validate(df)
+            df = json_to_df_val(data, insights_ads_schema)
             return df
         else:
             return pd.DataFrame()
@@ -179,9 +182,7 @@ class MetaClient:
         if raw:
             return data
         if len(data) > 0:
-            df = pd.json_normalize(data)
-            df.columns = [col_name.replace('.', '_') for col_name in df.columns]
-            df = insights_campaign_schema.validate(df)
+            df = json_to_df_val(data, insights_campaign_schema)
             return df
         else:
             return pd.DataFrame()
@@ -222,30 +223,12 @@ class MetaClient:
             'limit': 100,
             'access_token': self.token
         }
-        response = requests.get(url, params=params)
-        if response.status_code == 200:
-            response_json = response.json()
-            ads_data = response_json['data']
-            while True:
-                try:
-                    time.sleep(1) # Add parameter
-                    response = requests.get(response_json['paging']['next'])
-                    if response.status_code == 200:
-                        response_json = response.json()
-                        ads_data.extend(response_json['data'])
-                    else:
-                        raise KeyError(response.text)
-                except KeyError:
-                    break
-            if not raw:
-                df = pd.json_normalize(ads_data)
-                df.columns = [col_name.replace('.', '_') for col_name in df.columns]
-                df = ads_schema.validate(df) if df.shape != (0, 0) else pd.DataFrame()
-                return df
-            else:
-                return ads_data
+        ads_data = get_w_pagination(url, params=params)
+        if not raw:
+            df = json_to_df_val(ads_data, table_schema=ads_schema)
+            return df
         else:
-            raise KeyError(response.text)
+            return ads_data
 
     def df_from_adsets(self, ad_account_id: str, raw: bool = False):
         '''Calls data from adsets and returns it in a dataframe'''
@@ -284,30 +267,12 @@ class MetaClient:
             'limit': 100,
             'access_token': self.token
         }
-        response = requests.get(url, params=params)
-        if response.status_code == 200:
-            response_json = response.json()
-            adsets = response_json['data']
-            while True:
-                try:
-                    time.sleep(1) # Add parameter
-                    response = requests.get(response_json['paging']['next'])
-                    if response.status_code == 200:
-                        response_json = response.json()
-                        adsets.extend(response_json['data'])
-                    else:
-                        raise KeyError(response.text)
-                except KeyError:
-                    break
-            if not raw:
-                df = pd.json_normalize(adsets)
-                df.columns = [col_name.replace('.', '_') for col_name in df.columns]
-                df = adsets_schema.validate(df) if df.shape != (0, 0) else pd.DataFrame()
-                return df
-            else:
-                return adsets
+        adsets = get_w_pagination(url, params=params)
+        if not raw:
+            df = json_to_df_val(adsets, adsets_schema)
+            return df
         else:
-            raise KeyError(response.text)
+            return adsets
 
     def df_from_campaigns(self, ad_account_id: str, raw: bool = False):
         '''Calls data from campaigns and returns it in a dataframe'''
@@ -353,31 +318,13 @@ class MetaClient:
             'limit': 100,
             'access_token': self.token
         }
-        response = requests.get(url, params=params)
-        if response.status_code == 200:
-            response_json = response.json()
-            campaigns = response_json['data']
-            while True:
-                try:
-                    time.sleep(1) # Add parameter
-                    response = requests.get(response_json['paging']['next'])
-                    if response.status_code == 200:
-                        response_json = response.json()
-                        campaigns.extend(response_json['data'])
-                    else:
-                        raise KeyError(response.text)
-                except KeyError:
-                    break
-            if not raw:
-                df = pd.json_normalize(campaigns)
-                df.columns = [col_name.replace('.', '_') for col_name in df.columns]
-                df = campaigns_schema.validate(df) if df.shape != (0, 0) else pd.DataFrame()
-                return df
-            else:
-                return campaigns
+        campaigns = get_w_pagination(url, params=params)
+        if not raw:
+            df = json_to_df_val(campaigns, campaigns_schema)
+            return df
         else:
-            raise KeyError(response.text)
-        
+            return campaigns
+         
     def df_from_adcreatives(self, ad_account_id: str, raw: bool = False):
         '''Calls data from adcreatives and returns it in a dataframe'''
         url = f'{self.url}/act_{ad_account_id}/adcreatives'
@@ -399,33 +346,9 @@ class MetaClient:
             'limit': 100,
             'access_token': self.token
         }
-        # response = request_w_retries(url, params=params)
-        response = requests.get(url, params=params)
-        print('First request, ', response.status_code)
-        if response.status_code == 200:
-            response_json = response.json()
-            adcreatives = response_json['data']
-            while True:
-                try:
-                    time.sleep(1) # Add parameter
-                    response = request_w_retries(response_json['paging']['next'])
-                    # response = requests.get(response_json['paging']['next'])
-                    print('Request, ', response.status_code)
-                    if response.status_code == 200:
-                        response_json = response.json()
-                        adcreatives.extend(response_json['data'])
-                    else:
-                        raise KeyError(response.text)
-                except KeyError:
-                    print(response.text)
-                    break
-            if not raw:
-                # df = pd.json_normalize(adcreatives)
-                # df.columns = [col_name.replace('.', '_') for col_name in df.columns]
-                # df = new_schema.validate(df) if df.shape != (0, 0) else pd.DataFrame()
-                # return df
-                pass
-            else:
-                return adcreatives
+        adcreatives = get_w_pagination(url, params=params)
+        if not raw:
+            df_adcreatives = json_to_df_val(adcreatives, adcreatives_schema)
+            return df_adcreatives
         else:
-            raise KeyError(response.text)
+            return adcreatives
