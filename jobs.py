@@ -33,37 +33,35 @@ def df_to_bq(
 
 def extract_account(
     ad_account_id: str, 
-    meta_client, 
+    meta_client: MetaClient, 
+    tables: list,
     start: str,
-    end: str = (datetime.today() - timedelta(1)).strftime('%Y-%m-%d'),
-    tables: list = ['campaigns', 'adsets', 'ads', 'insights_ads']
+    end: str = (datetime.today() - timedelta(1)).strftime('%Y-%m-%d')
 ):
+    supported_tables = {
+        'campaigns': meta_client.df_from_campaigns,
+        'adsets': meta_client.df_from_adsets,
+        'ads': meta_client.df_from_ads,
+        'insights_ads': meta_client.df_from_ad_insights,
+        'monthly_insights_accounts': meta_client.df_from_monthly_insights_account,
+        'monthly_insights_ads': meta_client.df_from_monthly_insights_ads,
+        'monthly_insights_campaigns': meta_client.df_from_monthly_insights_campaigns,
+        'adcreatives': meta_client.df_from_adcreatives
+    }
     dict_tables = {}
-    if tables.count('campaigns') == 1:
-        df_campaigns = meta_client.df_from_campaigns(ad_account_id=ad_account_id)
-        dict_tables.update({'campaigns': df_campaigns})
-    if tables.count('adsets') == 1:
-        df_adsets = meta_client.df_from_adsets(ad_account_id=ad_account_id)
-        dict_tables.update({'adsets': df_adsets})
-    if tables.count('ads') == 1:
-        df_ads = meta_client.df_from_ads(ad_account_id=ad_account_id)
-        dict_tables.update({'ads': df_ads})
-    if tables.count('insights_ads') == 1:
-        df_insights = meta_client.df_from_ad_insights(start=start, end=end, ad_account_id=ad_account_id)
-        dict_tables.update({'insights_ads': df_insights})
-    if tables.count('monthly_insights_accounts') == 1:
-        df_monthly_insights_account = meta_client.df_from_monthly_insights_account(start=start, end=end, ad_account_id=ad_account_id)
-        dict_tables.update({'monthly_insights_accounts': df_monthly_insights_account})
-    if tables.count('monthly_insights_ads') == 1:
-        df_monthly_insights_ads = meta_client.df_from_monthly_insights_ads(start=start, end=end, ad_account_id=ad_account_id)
-        dict_tables.update({'monthly_insights_ads': df_monthly_insights_ads})    
-    if tables.count('monthly_insights_campaigns') == 1:
-        df_monthly_insights_campaigns = meta_client.df_from_monthly_insights_campaigns(start=start, end=end, ad_account_id=ad_account_id)
-        dict_tables.update({'monthly_insights_campaigns': df_monthly_insights_campaigns})
-    if tables.count('adcreatives') == 1:
-        df_adcreatives = meta_client.df_from_adcreatives(ad_account_id=ad_account_id)
-        dict_tables.update({'adcreatives': df_adcreatives})
-    
+    for table, method in supported_tables.items():
+        if table in tables:
+            try:
+                df = (
+                    method(ad_account_id=ad_account_id)
+                    if 'insights' not in table
+                    else method(start=start, end=end, ad_account_id=ad_account_id)
+                )
+                dict_tables.update({table: df})
+                logger.info(f'Extracted table {table} from ad account {ad_account_id} successfully.')
+            except Exception:
+                logger.exception(f'Error loading table {table} from ad account {ad_account_id}')
+                raise
     return dict_tables
 
 # MULTIPLE ACCOUNTS EXTRACTION SUSPENDED IN LOAD JOB - REIMPLAMENTATION WILL BE EVALUATED

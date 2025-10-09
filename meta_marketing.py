@@ -37,12 +37,12 @@ def get_w_pagination(url, params: dict = {}, t_between_calls=1):
                 next_url = response_json['paging']['next']
             except KeyError:
                 # LOOP FOR DEBUGGING
-                logger.info('Last page response:')
-                for key, value in response_json.items():
-                    if key == 'data':
-                        logger.info(f'Data with length: {len(value)}')
-                    else:
-                        logger.info(f'{key} : {value}')
+                # logger.info('Last page response:')
+                # for key, value in response_json.items():
+                #     if key == 'data':
+                #         logger.info(f'Data with length: {len(value)}')
+                #     else:
+                #         logger.info(f'{key} : {value}')
                 break
             response = request_w_retries(next_url)
             if response.status_code == 200:
