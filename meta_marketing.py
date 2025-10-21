@@ -9,7 +9,7 @@ from table_schemas import *
 
 logger = logging.getLogger(__name__)
 
-def request_w_retries(url, params=None, max_retries=4, base_wait=30):
+def request_w_retries(url, params=None, max_retries=4, base_wait=60):
     """Helper to perform GET with retry logic."""
     retries = 0
     while retries < max_retries:
@@ -27,7 +27,7 @@ def request_w_retries(url, params=None, max_retries=4, base_wait=30):
     return None  # safeguard, should never hit
 
 def get_w_pagination(url, params: dict = {}, t_between_calls=1):
-    response = requests.get(url, params=params)
+    response = request_w_retries(url, params=params)
     if response.status_code == 200:
         response_json =  response.json()
         data = response_json['data']
@@ -111,7 +111,7 @@ class MetaClient:
         '''
         url = f'{self.url}/act_{ad_account_id}/insights'
         fields = [
-            'account_currency',
+            # 'account_currency',
             'account_id',
             'account_name',
             'action_values',
@@ -120,23 +120,23 @@ class MetaClient:
             'ad_name',
             'adset_id',
             'adset_name',
-            'attribution_setting',
+            # 'attribution_setting',
             'campaign_id',
             'campaign_name',
-            'clicks',
-            'conversion_values',
-            'conversions',
-            'created_time',
+            # 'clicks',
+            # 'conversion_values',
+            # 'conversions',
+            # 'created_time',
             'date_start',
             'date_stop',
             'frequency',
             'impressions',
-            'objective',
-            'optimization_goal',
+            # 'objective',
+            # 'optimization_goal',
             'reach',
             'results',
             'spend',
-            'updated_time'
+            # 'updated_time'
         ]
         params = {
             'level': level,
@@ -196,29 +196,29 @@ class MetaClient:
         fields = [
             'id',
             'account_id',
-            'ad_active_time',
-            'ad_review_feedback',
+            # 'ad_active_time',
+            # 'ad_review_feedback',
             'ad_schedule_end_time',
             'ad_schedule_start_time',
-            'adlabels',
+            # 'adlabels',
             'adset_id',
-            'bid_amount',
+            # 'bid_amount',
             'campaign_id',
             'configured_status',
-            'conversion_domain',
-            'created_time',
+            # 'conversion_domain',
+            # 'created_time',
             'creative',
-            'creative_asset_groups_spec',
+            # 'creative_asset_groups_spec',
             'effective_status',
-            'issues_info',
-            'last_updated_by_app_id',
+            # 'issues_info',
+            # 'last_updated_by_app_id',
             'name',
             'preview_shareable_link',
-            'recommendations',
+            # 'recommendations',
             'source_ad_id',
             'status',
-            'tracking_specs',
-            'updated_time'
+            # 'tracking_specs',
+            # 'updated_time'
         ]
         params = {
             'fields': ','.join(fields),
@@ -239,30 +239,30 @@ class MetaClient:
         fields = [
             'id',
             'account_id',
-            'adlabels',
-            'adset_schedule',
-            'attribution_spec',
-            'budget_remaining',
-            'campaign_active_time',
-            'campaign_attribution',
+            # 'adlabels',
+            # 'adset_schedule',
+            # 'attribution_spec',
+            # 'budget_remaining',
+            # 'campaign_active_time',
+            # 'campaign_attribution',
             'campaign_id',
             'configured_status',
-            'created_time',
+            # 'created_time',
             'daily_budget',
-            'daily_min_spend_target',
-            'daily_spend_cap',
-            'destination_type',
+            # 'daily_min_spend_target',
+            # 'daily_spend_cap',
+            # 'destination_type',
             'effective_status',
             'end_time',
             'name',
             'optimization_goal',
-            'optimization_sub_event',
-            'pacing_type',
+            # 'optimization_sub_event',
+            # 'pacing_type',
             'promoted_object',
             'source_adset_id',
-            'start_time',
+            # 'start_time',
             'status',
-            'updated_time'
+            # 'updated_time'
         ]
         params = {
             'fields': ','.join(fields),
@@ -283,37 +283,37 @@ class MetaClient:
         fields = [
             'id',
             'account_id',
-            'adlabels',
-            'bid_strategy',
+            # 'adlabels',
+            # 'bid_strategy',
             'boosted_object_id',
-            'budget_rebalance_flag',
-            'budget_remaining',
-            'buying_type',
-            'can_use_spend_cap',
+            # 'budget_rebalance_flag',
+            # 'budget_remaining',
+            # 'buying_type',
+            # 'can_use_spend_cap',
             'configured_status',
-            'created_time',
+            # 'created_time',
             'daily_budget',
             'effective_status',
-            'is_adset_budget_sharing_enabled',
-            'is_budget_schedule_enabled',
-            'is_direct_send_campaign',
-            'is_message_campaign',
-            'issues_info',
-            'last_budget_toggling_time',
+            # 'is_adset_budget_sharing_enabled',
+            # 'is_budget_schedule_enabled',
+            # 'is_direct_send_campaign',
+            # 'is_message_campaign',
+            # 'issues_info',
+            # 'last_budget_toggling_time',
             'lifetime_budget',
             'name',
             'objective',
-            'pacing_type',
-            'primary_attribution',
-            'promoted_object',
-            'smart_promotion_type',
+            # 'pacing_type',
+            # 'primary_attribution',
+            # 'promoted_object',
+            # 'smart_promotion_type',
             'source_campaign_id',
-            'spend_cap',
+            # 'spend_cap',
             'start_time',
             'status',
             'stop_time',
-            'topline_id',
-            'updated_time'
+            # 'topline_id',
+            # 'updated_time'
         ]
         params = {
             'fields': ','.join(fields),
@@ -334,13 +334,13 @@ class MetaClient:
         fields = [
             'id',
             'account_id',
-            'body',
-            'effective_instagram_media_id',
-            'effective_object_story_id',
+            # 'body',
+            # 'effective_instagram_media_id',
+            # 'effective_object_story_id',
             'instagram_permalink_url',
-            'name',
+            # 'name',
             'status',
-            'thumbnail_url',
+            # 'thumbnail_url',
             'title'
         ]
         params = {
