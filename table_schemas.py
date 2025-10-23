@@ -175,6 +175,36 @@ insights_campaign_schema = pa.DataFrameSchema({
     '_DATA_DATE': pa.Column(pa.Date, default=datetime.today())
 }, strict='filter', coerce=True, add_missing_columns=True)
 
+insights_adset_schema = pa.DataFrameSchema({
+    # 'account_currency': pa.Column(pa.String),
+    'account_id': pa.Column(pa.String),
+    'account_name': pa.Column(pa.String),
+    'action_values': pa.Column(pa.String, nullable=True),
+    'actions': pa.Column(pa.String, nullable=True),
+    # 'ad_id': pa.Column(pa.String),
+    # 'ad_name': pa.Column(pa.String),
+    'adset_id': pa.Column(pa.String),
+    'adset_name': pa.Column(pa.String),
+    # 'attribution_setting': pa.Column(pa.String),
+    'campaign_id': pa.Column(pa.String),
+    'campaign_name': pa.Column(pa.String),
+    # 'clicks': pa.Column(pa.Int),
+    # 'conversion_values': pa.Column(pa.String, nullable=True),
+    # 'conversions': pa.Column(pa.String, nullable=True),
+    # 'created_time': pa.Column(pa.Date),
+    'date_start': pa.Column(pa.Date),
+    'date_stop': pa.Column(pa.Date),
+    'frequency': pa.Column(pa.Float),
+    'impressions': pa.Column(pa.Int),
+    # 'objective': pa.Column(pa.String),
+    # 'optimization_goal': pa.Column(pa.String),
+    'reach': pa.Column(pa.Int),
+    'results': pa.Column(pa.String),
+    'spend': pa.Column(pa.Float),
+    # 'updated_time': pa.Column(pa.Date),
+    '_DATA_DATE': pa.Column(pa.Date, default=datetime.today())
+}, strict='filter', coerce=True, add_missing_columns=True)
+
 adcreatives_schema = pa.DataFrameSchema({
     'id': pa.Column(pa.String),
     'account_id': pa.Column(pa.String),

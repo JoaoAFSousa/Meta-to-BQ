@@ -190,6 +190,16 @@ class MetaClient:
         else:
             return pd.DataFrame()
     
+    def df_from_monthly_insights_adsets(self, start: str, end: str, ad_account_id: str, raw: bool = False):
+        data = self.call_insights_data(level='adset', start=start, end=end, ad_account_id=ad_account_id, time_increment='monthly')
+        if raw:
+            return data
+        if len(data) > 0:
+            df = json_to_df_val(data, insights_adset_schema)
+            return df
+        else:
+            return pd.DataFrame()
+    
     def df_from_ads(self, ad_account_id: str, raw: bool = False):
         '''Calls data from ads and returns it in a dataframe'''
         url = f'{self.url}/act_{ad_account_id}/ads'

@@ -46,6 +46,7 @@ def extract_account(
         'monthly_insights_accounts': meta_client.df_from_monthly_insights_account,
         'monthly_insights_ads': meta_client.df_from_monthly_insights_ads,
         'monthly_insights_campaigns': meta_client.df_from_monthly_insights_campaigns,
+        'monthly_insights_adsets': meta_client.df_from_monthly_insights_adsets,
         'adcreatives': meta_client.df_from_adcreatives
     }
     dict_tables = {}
