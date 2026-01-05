@@ -123,6 +123,7 @@ def load(
             write_mode=write_mode,
             client=bq_client
         )
+        print(f'Table {bq_project_id}.{bq_dataset}.{table} loaded.')
 
 def update(
     meta_client, 
